@@ -130,9 +130,9 @@ logger.e('Loading events failed', error: error, stackTrace: stackTrace);
 ### The API
 
 ```dart
-class MockEventRepository extends Mock implements EventRepository {}
+class _MockEventRepository extends Mock implements EventRepository {}
 
-final repository = MockEventRepository();
+final repository = _MockEventRepository();
 
 when(() => repository.fetchAll()).thenAnswer((_) async => [event]);
 when(() => repository.delete(any())).thenThrow(const AppException.timeout());
@@ -155,38 +155,45 @@ final id = verify(() => repository.delete(captureAny())).captured.single;
 ### A Notifier test
 
 ```dart
+class _MockEventRepository extends Mock implements EventRepository {}
+
 void main() {
-  late MockEventRepository repository;
+  group('eventsProvider', () {
+    late _MockEventRepository repository;
+    late ProviderContainer container;
 
-  setUp(() => repository = MockEventRepository());
+    setUp(() {
+      repository = _MockEventRepository();
+      container = ProviderContainer.test(
+        overrides: [eventRepositoryProvider.overrideWithValue(repository)],
+        retry: (_, _) => null,
+      );
+      container.listen(eventsProvider, (_, _) {}); // keeps auto-dispose alive
+    });
 
-  ProviderContainer makeContainer() => ProviderContainer.test(
-    overrides: [eventRepositoryProvider.overrideWithValue(repository)],
-    retry: (_, _) => null,
-  );
+    test('returns the events from $EventRepository', () async {
+      when(() => repository.fetchAll()).thenAnswer(
+        (_) async => [const Event(id: 1, title: 'A')],
+      );
 
-  test('loads events', () async {
-    when(() => repository.fetchAll()).thenAnswer(
-      (_) async => [const Event(id: 1, title: 'A')],
-    );
-    final container = makeContainer();
+      final events = await container.read(eventsProvider.future);
 
-    container.listen(eventsProvider, (_, _) {}); // keeps auto-dispose alive
-    final events = await container.read(eventsProvider.future);
+      expect(events, hasLength(1));
+      verify(() => repository.fetchAll()).called(1);
+    });
 
-    expect(events, hasLength(1));
-    verify(() => repository.fetchAll()).called(1);
-  });
+    test('exposes the error when loading fails', () async {
+      when(() => repository.fetchAll())
+          .thenThrow(const AppException.timeout());
 
-  test('exposes the error', () async {
-    when(() => repository.fetchAll()).thenThrow(const AppException.timeout());
-    final container = makeContainer();
+      await expectLater(
+        container.read(eventsProvider.future),
+        throwsA(anything),
+      );
 
-    container.listen(eventsProvider, (_, _) {});
-    await expectLater(container.read(eventsProvider.future), throwsA(anything));
-
-    // The future rethrows a ProviderException; the state holds the original.
-    expect(container.read(eventsProvider).error, isA<RequestTimeout>());
+      // The future rethrows a ProviderException; the state holds the original.
+      expect(container.read(eventsProvider).error, isA<RequestTimeout>());
+    });
   });
 }
 ```
@@ -194,22 +201,22 @@ void main() {
 ### A widget test
 
 ```dart
-testWidgets('shows the list', (tester) async {
+testWidgets('shows the list when loading succeeds', (tester) async {
   when(() => repository.fetchAll()).thenAnswer(
     (_) async => [const Event(id: 1, title: 'A')],
   );
 
-  await tester.pumpWidget(
-    ProviderScope(
-      overrides: [eventRepositoryProvider.overrideWithValue(repository)],
-      child: const MaterialApp(home: EventsScreen()),
-    ),
+  await tester.pumpApp(
+    const EventsScreen(),
+    overrides: [eventRepositoryProvider.overrideWithValue(repository)],
   );
-  await tester.pumpAndSettle();
+  await tester.pump(); // the future completes, the screen rebuilds
 
   expect(find.text('A'), findsOneWidget);
 });
 ```
+
+`pumpApp` is the shared helper defined in [plugin-practices-guide.md](plugin-practices-guide.md), section 2, along with the naming and layout conventions used here.
 
 **Recommendation:**
 

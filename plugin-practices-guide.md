@@ -321,7 +321,7 @@ The plugin's own route samples are not usable as written; see section 12.
 
 ## 9. Animations
 
-New topic.
+The full treatment is now in [animations-guide.md](animations-guide.md); this section is the part that came from the VGV plugin.
 
 **Plugin (VGV animations skill):**
 

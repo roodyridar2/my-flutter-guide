@@ -1,6 +1,6 @@
 # Lints, logging and tests — recommended approach
 
-Covers `flutter_lints`, `riverpod_lint`, `logger` and `mocktail`.
+Covers `flutter_lints`, `riverpod_lint`, `logger`, `mocktail` and `integration_test`.
 
 Sources, read 2026-10-04: [flutter_lints](https://pub.dev/packages/flutter_lints), [riverpod_lint](https://pub.dev/packages/riverpod_lint), [logger](https://pub.dev/packages/logger), [mocktail](https://pub.dev/packages/mocktail), and the Riverpod [testing guide](https://riverpod.dev/docs/how_to/testing).
 
@@ -227,7 +227,122 @@ testWidgets('shows the list when loading succeeds', (tester) async {
 
 ---
 
-## 4. Review checklist
+## 4. Integration tests
+
+Sources, read 2026-10-04: the skill `flutter-add-integration-test` from the official Dart and Flutter plugin (installed copy; unchanged in the current repository), checked against [Check app functionality with an integration test](https://docs.flutter.dev/testing/integration-tests) on docs.flutter.dev. **Skill** and **Docs** mark what they say; **Adapted** marks my changes.
+
+**Verdict:** useful, with two corrections from the docs.
+
+- The skill runs everything with `flutter drive`. The docs use `flutter test integration_test/…` on phones and desktop, and `flutter drive` only for the browser.
+- The skill adds `enableFlutterDriverExtension()` to the app's entry point. That is needed only for its interactive exploration through the Flutter MCP tools, not for `integration_test`. Never put it in the real `main.dart`; if you want that exploration, use a separate `lib/main_test.dart`.
+
+### Setup
+
+```bash
+flutter pub add "dev:integration_test:{sdk: flutter}"
+```
+
+Tests live in `integration_test/` at the project root, in files named `<name>_test.dart`.
+
+### Writing
+
+**Skill and Docs:**
+
+- Call `IntegrationTestWidgetsFlutterBinding.ensureInitialized()` first in `main()`.
+- The API is the widget-test API: `testWidgets`, `tester.tap`, `tester.enterText`, finders and `expect`.
+- After an interaction, `pumpAndSettle()` waits for the resulting animations and frames.
+- Give the widgets a test must find a `Key`. Text changes with the language; keys do not.
+- Bring off-screen items into view with `tester.scrollUntilVisible(item, 500, scrollable: list)` before touching them.
+
+```dart
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
+
+  testWidgets('signs in and shows the home screen', (tester) async {
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          ...await testOverrides(),
+          apiClientProvider.overrideWithValue(FakeApiClient()),
+        ],
+        child: const MyApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.enterText(find.byKey(AppKeys.emailField), 'user@example.com');
+    await tester.enterText(find.byKey(AppKeys.passwordField), 'secret');
+    await tester.tap(find.byKey(AppKeys.signInButton));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HomeScreen), findsOneWidget);
+  });
+}
+```
+
+**Adapted:**
+
+- Start the real `MyApp` under a `ProviderScope`. Override only the outermost dependency, the `ApiClient`, with a fake or a test server, so that everything above it runs for real.
+- `main.dart` builds a list of startup overrides, such as the preferences instance. Put that in one function that both `main()` and the tests call (`testOverrides()` above).
+- Keys are constants in one file (`AppKeys`), not strings repeated in widgets and tests.
+- Keep these few: sign-in, the main journey, anything involving payment. They are slow, and each one that breaks for an unrelated reason costs trust in the suite.
+- `pumpAndSettle()` times out on a screen with an endless animation. Use `pump(duration)` there.
+
+### Running
+
+**Docs:**
+
+```bash
+flutter test integration_test/app_test.dart
+```
+
+That one command covers a connected phone, an emulator or simulator, and desktop. The browser needs ChromeDriver and a small driver file:
+
+```dart
+// test_driver/integration_test.dart
+import 'package:integration_test/integration_test_driver.dart';
+
+Future<void> main() => integrationDriver();
+```
+
+```bash
+chromedriver --port=4444
+```
+
+```bash
+flutter drive --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart -d chrome
+```
+
+Use `-d web-server` for a headless run.
+
+**Skill and Docs**, Firebase Test Lab on Android: build the debug APK and the instrumentation test APK, upload both, and run them as an instrumentation test.
+
+```bash
+flutter build apk --debug
+```
+
+```bash
+cd android && ./gradlew app:assembleAndroidTest
+```
+
+```bash
+cd android && ./gradlew app:assembleDebug -Ptarget=integration_test/app_test.dart
+```
+
+The third command is in the docs but not in the skill; it points the build at the test file.
+
+**Skill**, performance: wrap the actions in `binding.traceAction()` and use a driver script that writes the timeline summary to a file.
+
+### When a test fails
+
+**Skill:**
+
+- `PumpAndSettleTimedOutException`: something on screen animates forever.
+- A widget is not found: it is in a lazy list and not built yet. Scroll to it first.
+
+---
+
+## 5. Review checklist
 
 - [ ] `flutter analyze` is clean; no blanket `ignore_for_file` outside generated code.
 - [ ] Format, analyze and test run in CI.
@@ -236,3 +351,6 @@ testWidgets('shows the list when loading succeeds', (tester) async {
 - [ ] Async stubs use `thenAnswer`; fallback values registered in `setUpAll`.
 - [ ] Tests override repositories, not Notifiers.
 - [ ] Retry disabled in test containers.
+- [ ] The critical journeys have an integration test that runs the real app above a fake `ApiClient`.
+- [ ] Integration tests find widgets by key, and the keys are constants.
+- [ ] `enableFlutterDriverExtension()` is not in the production entry point.

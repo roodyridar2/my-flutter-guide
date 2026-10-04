@@ -173,6 +173,31 @@ abstract class Paged<T> with _$Paged<T> {
 
 Supported field types without a converter: `BigInt`, `bool`, `DateTime`, `double`, `Duration`, `Enum`, `int`, `Iterable`, `List`, `Map`, `num`, `Object`, `Record`, `Set`, `String`, `Uri`.
 
+### Validation, large payloads and tests
+
+These points come from the Flutter team's skill `flutter-implement-json-serialization`, read 2026-10-04 and checked against the [JSON page](https://docs.flutter.dev/data-and-backend/serialization/json) on docs.flutter.dev. The skill teaches hand-written `fromJson` and `toJson`. The docs recommend that for small projects and prototypes, and generated code for medium and large ones. This project generates everywhere, so there is one way to do it; the skill's hand-written workflow is not adopted. Four of its points carry over:
+
+- **Never leave `dynamic`.** Cast what `jsonDecode` or `response.data` returns to the expected type straight away.
+- **Fail clearly.** The skill checks the shape with a pattern-matching `switch` and throws `FormatException`. The generated equivalent is `checked: true` under `json_serializable` in `build.yaml`: a bad payload then fails with an error that names the key.
+- **Throw on a failed request; never return `null`.** Dio already throws for non-2xx statuses, and the repositories keep it that way.
+- **Parse large payloads off the main isolate.** Parsing that takes longer than one frame, about 16 ms, causes visible stutter. Dio decodes large bodies in the background, but turning thousands of maps into models still runs on the main isolate. When profiling shows that, do both steps in one background call:
+
+```dart
+// Must be a top-level or static function.
+List<Event> parseEvents(String body) {
+  final list = jsonDecode(body) as List<dynamic>;
+  return [for (final e in list) Event.fromJson(e as Map<String, dynamic>)];
+}
+
+final res = await _dio.get<String>(
+  '/events',
+  options: Options(responseType: ResponseType.plain),
+);
+final events = await compute(parseEvents, res.data!);
+```
+
+**Recommendation:** keep one real sample response per endpoint under `test/fixtures/` and run it through `fromJson` in a test. It is the cheapest way to notice that the backend changed a field. The skill asks for unit tests of both directions; with generated code, the fixture test is the part that still earns its place.
+
 ---
 
 ## 6. Running the generator

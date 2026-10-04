@@ -134,6 +134,7 @@ class AppShell extends StatelessWidget {
 }
 ```
 
+- To switch from the bottom bar to a side rail on wide windows, see [layout-guide.md](layout-guide.md), section 5.
 - With `StatefulShellRoute` the routes live on the branches, not on the shell.
 - `StatefulShellBranch(preload: true)` builds a branch's first screen before it is visited; default is `false`.
 - To show a child route above the shell (full-screen detail, modal flow), give it `parentNavigatorKey: _rootKey`.

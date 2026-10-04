@@ -71,13 +71,13 @@ With code generation the generator picks the row and column from the function or
 // by hand
 final userProvider =
     FutureProvider.autoDispose.family<User, String>((ref, id) async {
-  return ref.watch(apiClientProvider).fetchUser(id);
+  return ref.watch(userRepositoryProvider).getUser(id);
 });
 
 // with code generation
 @riverpod
 Future<User> user(Ref ref, String id) async {
-  return ref.watch(apiClientProvider).fetchUser(id);
+  return ref.watch(userRepositoryProvider).getUser(id);
 }
 ```
 
@@ -451,19 +451,26 @@ Generated providers get a `name` automatically; hand-written ones need `name: '.
 
 ## 13. Project layout
 
-The docs do not prescribe one beyond "place the code of your shared state where it belongs … right next to the Widget that needs it". **Recommendation:**
+The Riverpod docs do not prescribe one. **Recommendation:** follow the Flutter team's layout, set out in [architecture-guide.md](architecture-guide.md). The data and domain layers are grouped by type and shared; the UI is grouped by feature.
 
 ```
 lib/
   main.dart            ProviderScope, retry policy, observers
   app.dart             MaterialApp.router
-  core/                api client, storage, session: keep-alive providers
-  features/<feature>/
-    data/              repositories + their providers
-    domain/            models
-    application/       Notifiers
-    presentation/      ConsumerWidgets
+  routing/             router provider and routes
+  data/
+    services/          Dio provider, ApiClient, storage wrappers
+    repositories/      one per kind of data, each with its provider
+  domain/
+    models/            Freezed models
+  ui/
+    core/              shared widgets, theme
+    features/<feature>/
+      view_models/     Notifiers
+      views/           screens and their widgets
 ```
+
+Notifiers are the "view models" of that architecture. Services and repositories are keep-alive providers; view models are auto-dispose. A feature folder never imports another feature folder.
 
 ---
 

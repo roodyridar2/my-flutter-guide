@@ -156,14 +156,17 @@ In the Riverpod `retry` function, return `null` for `cancelled` and for 4xx serv
 
 ---
 
-## 5. Repository and provider
+## 5. Service, repository and provider
+
+The layers are those of [architecture-guide.md](architecture-guide.md): a service that knows HTTP, and a repository the rest of the app talks to.
 
 ```dart
-class EventRepository {
-  EventRepository(this._dio);
+// lib/data/services/api_client.dart
+class ApiClient {
+  ApiClient(this._dio);
   final Dio _dio;
 
-  Future<List<Event>> fetchAll({CancelToken? cancelToken}) {
+  Future<List<Event>> fetchEvents({CancelToken? cancelToken}) {
     return guardDio(() async {
       final res = await _dio.get<List<dynamic>>(
         '/events',
@@ -176,6 +179,27 @@ class EventRepository {
   }
 }
 
+@Riverpod(keepAlive: true)
+ApiClient apiClient(Ref ref) => ApiClient(ref.watch(dioProvider));
+```
+
+```dart
+// lib/data/repositories/event_repository.dart
+class EventRepository {
+  EventRepository(this._api);
+  final ApiClient _api;
+
+  Future<List<Event>> fetchAll({CancelToken? cancelToken}) {
+    return _api.fetchEvents(cancelToken: cancelToken);
+  }
+}
+
+@Riverpod(keepAlive: true)
+EventRepository eventRepository(Ref ref) =>
+    EventRepository(ref.watch(apiClientProvider));
+```
+
+```dart
 @riverpod
 Future<List<Event>> events(Ref ref) {
   final cancelToken = CancelToken();
@@ -184,7 +208,7 @@ Future<List<Event>> events(Ref ref) {
 }
 ```
 
-Leaving the screen disposes the provider, which cancels the request. Widgets and Notifiers never touch `Dio` directly.
+Leaving the screen disposes the provider, which cancels the request. Only `ApiClient` uses the `Dio` client; repositories, Notifiers and widgets never do.
 
 ---
 
@@ -219,7 +243,8 @@ await dio.download(url, savePath, onReceiveProgress: (received, total) {});
 - [ ] All three timeouts set.
 - [ ] `LogInterceptor` is last and only in debug builds; no tokens or bodies logged in release.
 - [ ] Refresh and retry use a `Dio` without the auth interceptor.
-- [ ] `DioException` never leaves the data layer; repositories throw `AppException`.
+- [ ] `DioException` never leaves `ApiClient`; the data layer throws `AppException`.
+- [ ] Only `ApiClient` holds the `Dio` client.
 - [ ] Requests started by a screen are cancelled when its provider is disposed.
 - [ ] A new `FormData` per upload attempt.
 - [ ] No disabled certificate checks.

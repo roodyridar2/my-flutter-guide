@@ -348,7 +348,7 @@ AnimatedOpacity(
 
 ## 10. Architecture boundaries
 
-Extends [riverpod-guide.md](riverpod-guide.md), section 13.
+Extends [architecture-guide.md](architecture-guide.md), which holds the layers and the folder layout.
 
 **Plugin (VGV layered-architecture skill):**
 
@@ -361,7 +361,7 @@ Extends [riverpod-guide.md](riverpod-guide.md), section 13.
 
 **Adapted:**
 
-- Keep these rules inside the single-package, feature-first layout. In this stack "business logic" is the Notifier, and "combining repositories" happens in a provider that watches both.
+- Keep these rules inside the single-package layout of the architecture guide. In this stack "business logic" is the Notifier, and "combining repositories" happens in a provider that watches both.
 - VGV puts each data client and each repository in its own Dart package. That enforces the rules by construction, at the cost of many `pubspec.yaml` files. It is worth it for a large team or shared packages; for one app, folders plus review are enough.
 - Use one Freezed model while the API shape and the app's needs match. Split into a response model and a domain model only where they diverge.
 - Other small points from flutter-skills: put domain helpers in extensions on the model, mark read-only fields with `includeToJson: false`, and put a timeout on calls the app's startup waits for.

@@ -168,13 +168,17 @@ void main() {
         overrides: [eventRepositoryProvider.overrideWithValue(repository)],
         retry: (_, _) => null,
       );
-      container.listen(eventsProvider, (_, _) {}); // keeps auto-dispose alive
     });
+
+    // Call after stubbing. Listening starts the provider's build, and it
+    // keeps an auto-dispose provider alive for the rest of the test.
+    void listen() => container.listen(eventsProvider, (_, _) {});
 
     test('returns the events from $EventRepository', () async {
       when(() => repository.fetchAll()).thenAnswer(
         (_) async => [const Event(id: 1, title: 'A')],
       );
+      listen();
 
       final events = await container.read(eventsProvider.future);
 
@@ -185,6 +189,7 @@ void main() {
     test('exposes the error when loading fails', () async {
       when(() => repository.fetchAll())
           .thenThrow(const AppException.timeout());
+      listen();
 
       await expectLater(
         container.read(eventsProvider.future),
@@ -197,6 +202,8 @@ void main() {
   });
 }
 ```
+
+Stub first, then listen. Listening runs the provider's `build` straight away, so a listener set up in `setUp` would call the mock before the test has stubbed it, and the unstubbed call fails with a `TypeError`.
 
 ### A widget test
 

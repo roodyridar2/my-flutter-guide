@@ -1,0 +1,73 @@
+{
+  "skill_name": "my-flutter-guide",
+  "evals": [
+    {
+      "id": 1,
+      "name": "products-feature",
+      "prompt": "im building a flutter app with riverpod 3, go_router, dio and freezed (build_runner is set up). add a 'products' feature for me: a list screen that loads from GET /products?page=N (the api returns { data: [...], last_page: N }), with pull to refresh and load more when i scroll to the bottom, plus a details screen at /products/:id that loads GET /products/:id. a product has id, name, price, image_url and description. write all the files i need.",
+      "expected_output": "Source files for a products feature (model, API service, repository, view models, list and details screens, routes) that follow the house architecture and Riverpod rules.",
+      "files": [],
+      "expectations": [
+        "HTTP calls live in a service class that is separate from the repository, and only that service uses Dio",
+        "A repository sits between the view models and the service and is provided through a Riverpod provider",
+        "The product model is an immutable Freezed class with JSON support",
+        "The list view model's build() performs the first fetch and returns or throws; it does not assign state or call AsyncValue.guard inside build",
+        "No screen starts a data load from initState",
+        "Load-more keeps the products already loaded when the next page fails (the list is not replaced by a loading or error state)",
+        "The details screen gets its data from a family provider keyed by the product id, not from a shared selected-product provider",
+        "Pull-to-refresh uses RefreshIndicator and re-runs the provider (ref.refresh or invalidate)",
+        "The list screen renders loading, error and data states from AsyncValue",
+        "Navigation to details puts the id in the path (/products/:id) through go_router, not an object in extra",
+        "Failures surface as a typed app exception thrown by the data layer; nothing returns null to signal failure",
+        "Screen-level providers are auto-dispose",
+        "User-visible strings come from generated localizations, not string literals",
+        "Files follow the layered layout: data/services, data/repositories, domain/models and ui/features/products with view models and views"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "login-form",
+      "prompt": "need a login screen for my flutter app (riverpod + go_router + dio). email and password, calls POST /auth/login which returns { access_token, refresh_token }. if the server returns 422 with field errors like { errors: { email: ['...'] } } show them under the right field. after login the user should land on the home screen. write the screen and whatever sits behind it.",
+      "expected_output": "A login form with validation, an action controller, token storage and session handling, with navigation driven by the router's redirect.",
+      "files": [],
+      "expectations": [
+        "The form key is a field of the State class and validation runs through Form and TextFormField validators",
+        "Submitting goes through a Riverpod Notifier whose state is an AsyncValue; the text being typed is not stored in a provider",
+        "The submit button is disabled or shows progress while the request is running",
+        "422 field errors from the server are shown under the matching field and are cleared when the user edits that field",
+        "Tokens are stored with flutter_secure_storage, not SharedPreferences",
+        "After a successful login the screen does not navigate itself; the session state changes and the router's redirect sends the user to home",
+        "TextEditingControllers are disposed",
+        "Email and password fields set keyboard type, text input action and autofill hints, and the password is obscured",
+        "The Dio call lives in a service or repository; the widget and the controller do not use Dio directly",
+        "The data layer throws a typed exception for failures, including the 422 case, instead of returning null or leaking DioException to the UI",
+        "User-visible strings come from generated localizations, not string literals",
+        "mounted is checked after awaits before context, ref or state is used again"
+      ]
+    },
+    {
+      "id": 3,
+      "name": "review-orders",
+      "prompt": "can you review these two files from our flutter app? we're on riverpod 3 and go_router. two bugs we keep seeing: when the api fails the orders screen just shows an empty list instead of an error, and when load more runs the whole list disappears and flashes. tell me what's wrong and how to fix it.",
+      "expected_output": "A review that explains both reported bugs, lists the other rule violations in the two files, and shows corrected code.",
+      "files": [
+        "evals/files/orders/orders_controller.dart",
+        "evals/files/orders/orders_screen.dart"
+      ],
+      "expectations": [
+        "Explains the empty-list bug: the error is caught inside the build path and `state.value ?? []` turns it into an empty list",
+        "Explains the flash on load more: loadMore replaces the whole state with loading, and says to keep the list and handle a failed page separately",
+        "Says build should do the fetch itself and return or throw, with no state assignment or AsyncValue.guard inside it",
+        "Flags the load started from initState",
+        "Flags ref.read in the widget's build and says to use ref.watch",
+        "Flags the repository catching errors and returning null, and says it should throw",
+        "Flags the Dio instance created inside the repository",
+        "Flags selectedOrderProvider or passing the order in extra, and recommends an id in the route with a provider keyed by id",
+        "Flags hard-coded UI strings, colours or text styles",
+        "Flags the provider not being auto-dispose or the mutable _page field kept outside the state",
+        "Provides corrected code for the controller",
+        "Findings are ordered by severity and tied to the two symptoms the user reported"
+      ]
+    }
+  ]
+}

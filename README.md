@@ -34,7 +34,7 @@ mkdir -p /path/to/your/app/.claude/skills && cp -R skills/my-flutter-guide /path
 **Skills CLI.** The repository uses the usual `skills/<name>/SKILL.md` layout, so this should work once the repository is on GitHub. It has not been tested yet:
 
 ```bash
-npx skills add https://github.com/<your-github-username>/my-flutter-guide --skill my-flutter-guide
+npx skills add https://github.com/roodyridar2/my-flutter-guide --skill my-flutter-guide
 ```
 
 ## Use it

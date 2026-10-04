@@ -131,6 +131,8 @@ dart run flutter_native_splash:remove
 
 ### Holding the splash during startup
 
+This keeps the static native splash on screen until startup finishes. For a splash that animates, hand over to a Flutter splash instead and do not hold the native one; see [splash-handoff-guide.md](splash-handoff-guide.md).
+
 ```dart
 void main() {
   final binding = WidgetsFlutterBinding.ensureInitialized();

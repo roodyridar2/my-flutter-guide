@@ -2,15 +2,15 @@
 
 A Claude skill, and the guides behind it, for building Flutter apps one consistent way.
 
-The stack it covers: Riverpod 3 with code generation, go_router with typed routes, Dio, Freezed and json_serializable, secure storage and shared preferences, Flutter's built-in localization, Firebase, plus forms, animations, adaptive layout and the hand-off from the native splash screen to a Flutter one.
+The stack it covers: Riverpod 3 with code generation, go_router with typed routes, Dio, Freezed and json_serializable, secure storage and shared preferences, Flutter's built-in localization, Firebase, plus forms, animations, adaptive layout, the hand-off from the native splash screen to a Flutter one, current Dart language habits, dependency upgrades and widget previews.
 
-Each guide was written from the package's own documentation on 2026-10-04. It separates what the documentation states from what is this project's recommendation, and ends with a review checklist.
+Each guide was written from the documentation of the package or tool it covers, the first seventeen on 2026-10-04 and three more on 2026-10-06. It separates what the documentation states from what is this project's recommendation, and ends with a review checklist.
 
 ## What is in this repository
 
 | Path | What it is |
 |---|---|
-| [`docs/`](docs/) | The 17 guides and a new-project setup checklist. This is the source of truth. |
+| [`docs/`](docs/) | The 20 guides and a new-project setup checklist. This is the source of truth. |
 | [`skills/my-flutter-guide/`](skills/my-flutter-guide/) | The skill: `SKILL.md` (core rules and which guide to open for which task) and `references/` (a copy of `docs/`). |
 | [`dist/my-flutter-guide.skill`](dist/my-flutter-guide.skill) | The skill as one installable file. |
 | [`scripts/build_skill.py`](scripts/build_skill.py) | Copies `docs/` into the skill and rebuilds the installable file. |
@@ -79,7 +79,10 @@ When the skill is active, Claude:
 | [forms](docs/forms-guide.md) | Forms, validation, server-side errors |
 | [animations](docs/animations-guide.md) | Choosing an animation approach, motion tokens, reduce-motion |
 | [firebase](docs/firebase-guide.md) | Setup, Crashlytics, Cloud Messaging |
-| [plugin-practices](docs/plugin-practices-guide.md) | Theming, accessibility, security, test conventions, quality gate |
+| [dart-language](docs/dart-language-guide.md) | `switch` and patterns, records, primary constructors, exceptions, doc comments |
+| [dependencies](docs/dependencies-guide.md) | Upgrading packages, the lockfile, version conflicts |
+| [widget-previews](docs/widget-previews-guide.md) | The Widget Previewer with the app's theme, translations and providers |
+| [plugin-practices](docs/plugin-practices-guide.md) | Theming, accessibility, security, test conventions, quality gate, and where each skill of the official plugin went |
 | [project-setup](docs/project-setup.md) | The order of work for a new project |
 
 ## Change the rules
@@ -117,8 +120,8 @@ How to read this:
 
 ## Limits to know about
 
-- **The guides have a date.** They describe the package versions current on 2026-10-04, named at the top of each guide. The skill tells Claude to check the project's real versions and not to copy version numbers from the guides.
-- **The code samples were not compiled.** They are patterns. Let the analyzer have the last word.
+- **The guides have a date.** They describe the versions current when they were written (2026-10-04 or 2026-10-06), named at the top of each guide. The skill tells Claude to check the project's real versions and not to copy version numbers from the guides.
+- **Most code samples were not compiled.** They are patterns. Let the analyzer have the last word. The three guides added on 2026-10-06 are the exception: their samples and commands were run on Flutter 3.47.2, as each one says at the top.
 - **It is one team's choice of stack.** On a project with another state manager, the layering, data, navigation, UI and testing rules still apply; the Riverpod specifics do not.
 
 ## Sources

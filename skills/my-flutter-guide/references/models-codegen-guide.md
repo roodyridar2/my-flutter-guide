@@ -254,7 +254,7 @@ The alternative, ignoring them and generating in CI, is equally valid. Pick one 
 
 - **Freezed 4.0:** the `final` keyword inside a constructor parameter is no longer supported. Dart primary constructors are supported.
 - **Freezed 3.0:** `when`/`map` removed; classes must be `abstract` or `sealed`; a plain class with ordinary fields can also be annotated ("mixed mode").
-- Dart 3.13 has primary constructors in the language. Freezed is still what provides `==`, `copyWith` and unions.
+- Dart 3.13 has primary constructors in the language. Freezed is still what provides `==`, `copyWith` and unions. Where primary constructors do fit in this stack is in [dart-language-guide.md](dart-language-guide.md), section 6.
 
 ---
 

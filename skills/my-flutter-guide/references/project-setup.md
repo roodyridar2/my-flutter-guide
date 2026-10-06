@@ -40,6 +40,8 @@ flutter pub add "dev:integration_test:{sdk: flutter}"
 
 Add these only when a feature needs them: `cached_network_image`, `flutter_svg`, `url_launcher`, `permission_handler`, `package_info_plus`, the Firebase packages, and as dev dependencies `flutter_launcher_icons` and `flutter_native_splash`.
 
+Commit `pubspec.lock`. Upgrading later, and what to do when pub cannot find versions that fit together, is in `dependencies-guide.md`.
+
 ## 3. Analysis, generation and localization config
 
 | File | What goes in it | Guide |
@@ -94,6 +96,7 @@ Build the list of startup overrides in one function that `main` calls, so integr
 
 - `test/helpers/pump_app.dart`: the shared widget-test wrapper (`plugin-practices-guide.md`, section 2).
 - One Notifier test and one widget test to prove the wiring, written to the conventions in `quality-guide.md`, section 3.
+- Optional: `lib/ui/core/previews/app_preview.dart`, the shared annotation for widget previews (`widget-previews-guide.md`, section 5).
 
 ## 7. Native pieces
 

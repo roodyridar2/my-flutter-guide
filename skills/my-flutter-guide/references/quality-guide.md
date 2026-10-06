@@ -2,7 +2,7 @@
 
 **Contents:** 1. Lints · 2. Logging · 3. Tests with mocktail · 4. Integration tests · 5. Review checklist
 
-Covers `flutter_lints`, `riverpod_lint`, `logger`, `mocktail` and `integration_test`.
+Covers `flutter_lints`, `riverpod_lint`, `dart fix`, coverage, `logger`, `mocktail` and `integration_test`.
 
 Sources, read 2026-10-04: [flutter_lints](https://pub.dev/packages/flutter_lints), [riverpod_lint](https://pub.dev/packages/riverpod_lint), [logger](https://pub.dev/packages/logger), [mocktail](https://pub.dev/packages/mocktail), and the Riverpod [testing guide](https://riverpod.dev/docs/how_to/testing).
 
@@ -46,6 +46,34 @@ linter:
 
 **Recommendation:** the three `strict-*` modes and the extra rules above are mine. They catch implicit `dynamic`, which is where most JSON-handling bugs start. `riverpod_lint` is set up under `plugins:`, not in `pubspec.yaml`; its rules are listed in [riverpod-guide.md](riverpod-guide.md).
 
+### Automated fixes
+
+Sources, read 2026-10-06: the skill `dart-run-static-analysis` from the official Dart and Flutter plugin (installed copy 1.0.5), checked against [dart fix](https://dart.dev/tools/dart-fix) and [dart format](https://dart.dev/tools/dart-format).
+
+```bash
+dart fix --dry-run
+```
+
+```bash
+dart fix --apply
+```
+
+**Skill and Docs:**
+
+- `dart fix` applies the quick fixes for what the analyzer reports. It also rewrites calls to deprecated APIs when the SDK or a package ships the fix for them.
+- It only fixes diagnostics that are switched on. Enabling a lint in `analysis_options.yaml` is what lets `dart fix` clean up after it.
+- `--code` limits a run to named diagnostics: `dart fix --apply --code=prefer_single_quotes`.
+- Not every diagnostic has a fix.
+- The formatter's line width is set under a top-level `formatter:` key, as `page_width`. The default is 80.
+
+**Adapted:**
+
+- Order: dry run, read what it proposes, apply, then format, analyze and test.
+- Three moments call for it: after switching on a lint, after a Flutter or package upgrade ([dependencies-guide.md](dependencies-guide.md), section 4), and before fixing a long list of the same warning by hand.
+- Commit the result by itself. A mechanical change mixed into a feature hides the feature in review.
+- Never fix a generated file. Regenerate it.
+- Leave the line width at the default unless the team has agreed on another. Changing it reformats every file in one commit.
+
 ### In CI
 
 ```bash
@@ -61,6 +89,22 @@ flutter test
 ```
 
 A warning is either fixed or ignored on that line with a reason. Do not leave a standing list of warnings.
+
+### Coverage
+
+```bash
+flutter test --coverage
+```
+
+This writes `coverage/lcov.info`. The rules for the number are in [plugin-practices-guide.md](plugin-practices-guide.md), section 3.
+
+**Skill** (`dart-collect-coverage`): code can be left out of the report with `// coverage:ignore-line`, a `// coverage:ignore-start` and `// coverage:ignore-end` pair, or `// coverage:ignore-file`.
+
+**Adapted:**
+
+- The skill collects with `dart run coverage:test_with_coverage`, which is for a plain Dart package. In a Flutter app the command above does the job and honours the same comments.
+- The report lists only the files that some test loaded. A file with no test at all is absent, not counted as zero, so the percentage flatters. Compare the files in the report with `lib/` before trusting the number.
+- The ignore comments are for code a test cannot reach, such as a platform branch. On reachable code they are a weakened gate.
 
 ---
 
@@ -355,6 +399,8 @@ The third command is in the docs but not in the skill; it points the build at th
 
 - [ ] `flutter analyze` is clean; no blanket `ignore_for_file` outside generated code.
 - [ ] Format, analyze and test run in CI.
+- [ ] After a lint, SDK or package upgrade, `dart fix --dry-run` proposes nothing.
+- [ ] Every file in `lib/` that should be tested appears in the coverage report.
 - [ ] One `Logger` from a provider; no `print`.
 - [ ] Release builds log warnings and above, to crash reporting, with no secrets.
 - [ ] Async stubs use `thenAnswer`; fallback values registered in `setUpAll`.

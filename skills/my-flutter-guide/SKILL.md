@@ -1,11 +1,11 @@
 ---
 name: my-flutter-guide
-description: House rules and reference guides for building Flutter apps on this stack - Riverpod 3 with code generation, go_router with typed routes, Dio, Freezed and json_serializable, secure storage, gen-l10n, Firebase, forms, animations, adaptive layout and the native-to-Flutter splash hand-off. Use this skill whenever the user asks to set up a Flutter project, add or change a feature, screen, provider or Notifier, model, repository, API call, route, form, animation, theme, test or splash screen, wants Flutter or Dart code reviewed, fixed or refactored, or asks what the recommended way to do something in Flutter is, even when they do not mention the guide. Also use it when the user types /my-flutter-guide.
+description: House rules and reference guides for building Flutter apps on this stack - Riverpod 3 with code generation, go_router with typed routes, Dio, Freezed and json_serializable, secure storage, gen-l10n, Firebase, forms, animations, adaptive layout, widget previews and the native-to-Flutter splash hand-off. Use this skill whenever the user asks to set up a Flutter project, add or change a feature, screen, provider or Notifier, model, repository, API call, route, form, animation, theme, test, widget preview or splash screen, wants to upgrade packages or fix a pub version conflict, wants Flutter or Dart code reviewed, fixed or refactored, or asks what the recommended way to do something in Flutter or Dart is, even when they do not mention the guide. Also use it when the user types /my-flutter-guide.
 ---
 
 # My Flutter Guide
 
-One team's agreed way to build Flutter apps. The detail lives in `references/`: seventeen guides, each written from the package's own documentation on 2026-10-04 and each ending in a review checklist. This file is the map: how to approach a task, the rules that apply to all of them, and which guide to open for which job.
+One team's agreed way to build Flutter apps. The detail lives in `references/`: twenty guides, each written from the documentation of the package or tool it covers (seventeen on 2026-10-04, three on 2026-10-06) and each ending in a review checklist. This file is the map: how to approach a task, the rules that apply to all of them, and which guide to open for which job.
 
 ## How to work
 
@@ -57,6 +57,11 @@ These hold for every task. Each one exists because the opposite is a mistake tha
 - Test the real Notifier with a mocked or fake repository. Override repositories, not Notifiers.
 - `ProviderContainer.test()` with retry turned off, private mocks, `setUp` inside groups.
 
+**Language and packages** (`dart-language-guide.md`, `dependencies-guide.md`)
+- A `switch` over a type this app owns (a Freezed union, an app enum) has no `_` and no `default`, so that adding a case stops every switch that must handle it from compiling. Over a package's type, keep the `_`.
+- Primary constructors need Dart 3.13, suit plain classes only (models stay Freezed), and are never introduced as a side effect of another change.
+- Never delete `pubspec.lock` to get past a version conflict: that upgrades everything at once. Upgrade the one package in the way.
+
 ## Which guide to open
 
 All paths are under `references/`.
@@ -71,7 +76,10 @@ All paths are under `references/`.
 | Models, JSON, Freezed, `build_runner` | `models-codegen-guide.md` |
 | Tokens, settings, anything kept on the device | `storage-guide.md` |
 | Translations, ARB files, dates and numbers, right-to-left | `localization-guide.md` |
-| Lints, logging, unit, widget and integration tests, CI | `quality-guide.md` |
+| Lints, `dart fix`, coverage, logging, unit, widget and integration tests, CI | `quality-guide.md` |
+| `switch` and patterns, records, primary constructors, exceptions, doc comments | `dart-language-guide.md` |
+| Upgrading packages, `pubspec.lock`, a pub version conflict | `dependencies-guide.md` |
+| Widget previews (`@Preview`) | `widget-previews-guide.md` |
 | Network images, SVG | `images-guide.md` |
 | Opening links, permissions, app version | `platform-guide.md` |
 | App icon, static native splash | `app-icon-splash-guide.md` |
@@ -80,9 +88,9 @@ All paths are under `references/`.
 | Forms and validation | `forms-guide.md` |
 | Animations and page transitions | `animations-guide.md` |
 | Firebase setup, Crashlytics, push notifications | `firebase-guide.md` |
-| Theming, accessibility, security, test conventions, quality gate | `plugin-practices-guide.md` |
+| Theming, accessibility, security, test conventions, quality gate, what was taken from which plugin | `plugin-practices-guide.md` |
 
-The five longest guides start with a contents line. Read the sections you need, not the whole file.
+Guides longer than 300 lines start with a contents line. Read the sections you need, not the whole file.
 
 ## Common jobs
 
@@ -92,6 +100,8 @@ The five longest guides start with a contents line. Read the sections you need, 
 
 **Review code.** Work out which guides the code touches and go through each one's checklist against it. Report findings most serious first. For each: the file and line, what is wrong, which rule it breaks and why that matters, and the fix, with corrected code where that helps. Connect the findings to the symptoms the user described. Do not rewrite the code unless asked.
 
+**Upgrade packages, or fix a version conflict.** Follow `dependencies-guide.md`: read the solver's message, upgrade the one package or family it names, then regenerate, run `dart fix`, analyze and test. An SDK upgrade or a major version is its own change.
+
 **Answer a "what is the recommended way" question.** Answer from the guide. Each guide marks what the package documentation states and what is this team's recommendation; keep that distinction in the answer and name the guide.
 
 ## When the guides and the project disagree
@@ -100,4 +110,4 @@ The five longest guides start with a contents line. Read the sections you need, 
 - **Older versions:** the Riverpod guide is written for 3.x and the go_router guide for 18. On older majors some APIs do not exist (`ref.mounted`, automatic retry) or behave differently (`AsyncValue.value` rethrows on Riverpod 2). Adapt, and say so.
 - **No `build_runner`:** write providers by hand and use named routes. Both styles are shown in the guides.
 - **A different state manager (Bloc, Provider, GetX):** the layering, data, navigation, UI and testing rules still apply. The Riverpod specifics do not; say that instead of mixing two state managers.
-- **The guides' code samples were not compiled.** Treat them as patterns and let the analyzer have the last word.
+- **Most of the guides' code samples were not compiled.** Treat them as patterns and let the analyzer have the last word. The guides that were checked on a real SDK say so at the top, with the version.

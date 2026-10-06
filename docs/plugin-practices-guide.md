@@ -9,6 +9,8 @@ Sources, read 2026-10-04:
 
 **Plugin** marks what a plugin teaches (paraphrased). **Adapted** marks how I changed it for this stack. Code samples have not been compiled.
 
+A third plugin, the official Dart and Flutter one, is handled in the guides for each topic. Section 13 lists where each of its skills went.
+
 ---
 
 ## 1. Verdict
@@ -158,6 +160,7 @@ dart pub outdated
 
 - `String.fromEnvironment('API_BASE_URL')` in the Dio guide is fine. A base URL is configuration, not a secret. The rule is about keys and passwords.
 - Keep the `build/symbols/` output of each release. Crash reports from an obfuscated build cannot be read without it.
+- How to read `pub outdated`, and how to move a package that an advisory names, is in [dependencies-guide.md](dependencies-guide.md).
 - The plugin also says not to build your own authentication and to use a provider such as Firebase Auth or Auth0. That is a product decision. If the backend issues its own tokens, the refresh flow in the Dio guide stands.
 - The plugin rates missing certificate pinning as a warning everywhere. I keep it optional: pin when the app handles payments or similar, and plan for certificate rotation first.
 
@@ -377,7 +380,7 @@ Extends [architecture-guide.md](architecture-guide.md), which holds the layers a
 - CI pins the Flutter version instead of using "latest stable".
 - Licences are checked across all dependencies, including transitive ones. A package with no licence is a finding.
 
-**Adapted:** the same single-purpose rule works for lint-set upgrades: one pull request with the version bump and the fixes for newly reported lints, nothing else.
+**Adapted:** the same single-purpose rule works for lint-set upgrades: one pull request with the version bump and the fixes for newly reported lints, nothing else. It also covers package upgrades ([dependencies-guide.md](dependencies-guide.md), section 4) and converting classes to primary constructors ([dart-language-guide.md](dart-language-guide.md), section 6).
 
 ---
 
@@ -409,7 +412,35 @@ Inconsistencies inside the VGV plugin, for awareness: several of its own samples
 
 ---
 
-## 13. Running the plugins themselves
+## 13. The official Dart and Flutter plugin
+
+Read 2026-10-04 and 2026-10-06: `dart-flutter` 1.0.5 from [flutter/agent-plugins](https://github.com/flutter/agent-plugins), 25 skills. Its skills are checked against dart.dev and docs.flutter.dev in the guide for each topic, not here. This is the map.
+
+| Skill | Where it went |
+|---|---|
+| `flutter-apply-architecture-best-practices` | [architecture-guide.md](architecture-guide.md) |
+| `flutter-build-responsive-layout`, `flutter-fix-layout-issues` | [layout-guide.md](layout-guide.md) |
+| `flutter-add-integration-test` | [quality-guide.md](quality-guide.md), section 4, with two corrections |
+| `dart-run-static-analysis`, `dart-collect-coverage` | [quality-guide.md](quality-guide.md), section 1 |
+| `dart-use-pattern-matching`, `dart-use-primary-constructors`, `dart-write-documentation`, `dart-fix-runtime-errors` | [dart-language-guide.md](dart-language-guide.md) |
+| `dart-resolve-package-conflicts` | [dependencies-guide.md](dependencies-guide.md) |
+| `flutter-add-widget-preview` | [widget-previews-guide.md](widget-previews-guide.md). Its code is out of date for Flutter 3.47; the guide's is not. |
+
+Left out:
+
+| Skill | Why it was not adopted |
+|---|---|
+| `flutter-use-http-package` | The stack uses Dio behind one `ApiClient`. |
+| `flutter-implement-json-serialization` | It writes `fromJson` and `toJson` by hand. The stack generates them with Freezed and `json_serializable`. |
+| `dart-generate-test-mocks` | `mockito` with generated mocks. The stack uses `mocktail`. |
+| `flutter-setup-declarative-routing`, `flutter-setup-localization` | Both set up what [go-router-guide.md](go-router-guide.md) and [localization-guide.md](localization-guide.md) already cover in more depth for this stack. |
+| `dart-add-unit-test`, `flutter-add-widget-test` | General introductions. The conventions in section 2 and in the quality guide are stricter. |
+| `dart-migrate-to-checks-package` | A different assertion library. The guides use `expect` and matchers. |
+| `dart-build-cli-app`, `dart-setup-ffi-assets`, `dart-use-ffigen`, `dart-use-doc-examples`, `dart-use-path-package` | Command-line tools, native interop and package publishing. Not app work. |
+
+---
+
+## 14. Running the plugins themselves
 
 What the VGV plugin does when it is enabled in a Claude session:
 
@@ -421,10 +452,11 @@ What the VGV plugin does when it is enabled in a Claude session:
 
 - **flutter-skills:** disable it for this project. Its `flutter-dev` skill applies automatically and pushes the patterns rejected above.
 - **VGV:** useful as a reference, and its accessibility, theming and security skills can be invoked on demand. Leaving it fully enabled means installing Very Good CLI and accepting Bloc-oriented reviews. A file written before its generated `part` exists will also probably fail the analyze hook.
+- **Official Dart and Flutter plugin:** it brings two things. Its skills apply by themselves, and three of them teach what this stack rejects (the `http` package, hand-written JSON, `mockito`). Its Dart tooling server gives Claude the analyzer, hot reload and the widget inspector for a running app. The plugin switches on or off as a whole. With it on, these guides still decide; with it off, nothing in them depends on it.
 
 ---
 
-## 14. Review checklist
+## 15. Review checklist
 
 - [ ] Tests mirror `lib/`, read as sentences, and use private mocks with `setUp` inside groups.
 - [ ] Widgets are pumped through `pumpApp` with provider overrides; no inline `MaterialApp`.
